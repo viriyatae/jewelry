@@ -9,33 +9,21 @@ pacman::p_load(pacman, dplyr, ggplot2, ggthemes, rio, stringr, tidyr,
                dotwhisker, factoextra, CGPfunctions, gmodels, ggpubr)
 
 ## Download the file ----
-jewelry_raw <- read.csv("/Users/13000543/Documents/GitHub/jewelry/jewelry.csv") %>%
+jewelry_raw <- read.csv("jewelry.csv") %>%
         mutate(country = factor(country, levels = c("Thailand","Taiwan")),
-               generation = factor(generation, levels = c("Y","Z"))) %>%
-        mutate(monthly_income = factor(monthly_income, levels = c("Below 15,000 THB","15,001 to 30,000 THB","30,001 to 60,000  THB","Above 60,001 THB")),
-               education = factor(education, levels = c("High school","Bachelor's degree","Master's degree","PH.D. or higher")))
+               generation = factor(generation, levels = c("Y","Z")))
 
 # 1. Compute descriptive statistics ----
 table(jewelry_raw$country)
 table(jewelry_raw$country) %>% prop.table()
 table(jewelry_raw$generation)
 table(jewelry_raw$generation) %>% prop.table()
-table(jewelry_raw$gender)
-table(jewelry_raw$gender) %>% prop.table()
-table(jewelry_raw$monthly_income)
-table(jewelry_raw$monthly_income) %>% prop.table()
-table(jewelry_raw$education)
-table(jewelry_raw$education) %>% prop.table()
-table(jewelry_raw$marital_status)
-table(jewelry_raw$marital_status) %>% prop.table()
-table(jewelry_raw$employment_status)
-table(jewelry_raw$employment_status) %>% prop.table()
 
 # 2. Visualise and compare importance from Conjoint Analysis ----
 ## Transform the data
 jewelry_imp_long <- jewelry_raw %>%
-        pivot_longer(cols = 10:15, names_to = "importance", values_to = "percent") %>%
-        mutate(importance = factor(importance, levels = colnames(jewelry_raw[,10:15])))
+        pivot_longer(cols = 4:9, names_to = "importance", values_to = "percent") %>%
+        mutate(importance = factor(importance, levels = colnames(jewelry_raw[,4:9])))
 
 ## 2.1 Visualise importance by country ----
 conjoint_country_plot <- ggplot(jewelry_imp_long, aes(x = importance, y  = 100*percent, color = country, group = country)) +
@@ -101,7 +89,7 @@ t.test(jewelry_raw$sustainable_process, jewelry_raw$uniqueness, paired = TRUE)
 
 # 3. k-means cluster analysis ----
 ## Prepare the data
-jewelry_for_kmeans <- jewelry_raw %>% dplyr::select(10:15)
+jewelry_for_kmeans <- jewelry_raw %>% dplyr::select(4:9)
 
 ## 3.1 Determine the most suitable number of clusters ----
 ## Use the elbow method
@@ -159,11 +147,11 @@ jewelry_new <- jewelry_raw %>%
         mutate(segment = factor(segment, levels = 1:k)) %>%
         mutate(segment = factor(segment, levels = c(2,3,6,4,1,5), labels = c("customizers","perfectionists","legacy lovers","zero-waste warriors","transparency trackers","green operators")))
 
-
 ## 3.5 Visualise the number of respondents in each cluster ----
 ggplot(jewelry_new, aes(x = segment)) + geom_bar(width = 0.75) +
         geom_text(stat='count', aes(label=..count..), vjust = 1.5, color = "white", size = 4) +
         theme_light() 
+
 ## By country
 ggplot(jewelry_new, aes(x = segment, fill = country)) + 
         geom_bar(position = "dodge", width = 0.75) +
@@ -177,10 +165,3 @@ ggplot(jewelry_new, aes(x = segment, fill = country)) +
 CrossTable(jewelry_new$segment, jewelry_new$country, expected = TRUE)
 PlotXTabs2(jewelry_new, segment, country)
 PlotXTabs2(jewelry_new, segment, generation)
-PlotXTabs2(jewelry_new, segment, gender)
-PlotXTabs2(jewelry_new, segment, age)
-PlotXTabs2(jewelry_new, segment, monthly_income)
-PlotXTabs2(jewelry_new, segment, education)
-PlotXTabs2(jewelry_new, segment, employment_status)
-PlotXTabs2(jewelry_new, segment, marital_status)
-
